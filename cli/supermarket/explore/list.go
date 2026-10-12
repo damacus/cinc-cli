@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	sm "github.com/cinc-project/cinc-supermarket-api"
 
 	"github.com/cinc-project/cinc-cli/cli/progname"
@@ -41,7 +41,7 @@ func updateBrowse(m model, msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.browse.previewBusy = true
 		return m, loadDetail(m.ctx, m.client, msg.name, msg.reqID, targetPreview)
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return handleBrowseKey(m, msg)
 	}
 	return m, nil
@@ -116,7 +116,7 @@ func applyCookbookDetail(m model, msg cookbookDetailMsg) (tea.Model, tea.Cmd) {
 // handleBrowseKey routes a key event by mode. A pending install
 // confirmation intercepts everything; otherwise, in search mode printable
 // characters edit the query, and in nav mode sort/quit/etc. hotkeys win.
-func handleBrowseKey(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func handleBrowseKey(m model, msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.browse.confirmInstall {
 		return handleInstallConfirm(m, msg)
 	}
@@ -126,7 +126,7 @@ func handleBrowseKey(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return handleNavKey(m, msg)
 }
 
-func handleNavKey(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func handleNavKey(m model, msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Quit):
 		return m, tea.Quit
@@ -183,7 +183,7 @@ func startInstall(m model) (tea.Model, tea.Cmd) {
 
 // handleInstallConfirm resolves the y/n prompt. Enter or y proceeds;
 // anything else cancels.
-func handleInstallConfirm(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func handleInstallConfirm(m model, msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "y", "Y", "enter":
 		m.browse.confirmInstall = false
@@ -215,8 +215,11 @@ func applyInstallDone(m model, msg installDoneMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func handleSearchKey(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
+func handleSearchKey(m model, msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if msg.String() == "ctrl+c" {
+		return m, tea.Quit
+	}
+	switch msg.Code {
 	case tea.KeyEsc:
 		m.browse.searchInput.Blur()
 		m.browse.searchFocused = false
@@ -230,8 +233,6 @@ func handleSearchKey(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.browse.searchFocused = false
 		m.browse.query = m.browse.searchInput.Value()
 		return m, nil
-	case tea.KeyCtrlC:
-		return m, tea.Quit
 	}
 	var cmd tea.Cmd
 	m.browse.searchInput, cmd = m.browse.searchInput.Update(msg)

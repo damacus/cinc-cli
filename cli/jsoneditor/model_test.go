@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
-func press(m Model, t tea.KeyType) Model { m, _ = m.Update(tea.KeyMsg{Type: t}); return m }
-func down(m Model) Model                 { return press(m, tea.KeyDown) }
-func tab(m Model) Model                  { return press(m, tea.KeyTab) }
+func press(m Model, key rune) Model { m, _ = m.Update(tea.KeyPressMsg{Code: key}); return m }
+func down(m Model) Model            { return press(m, tea.KeyDown) }
+func tab(m Model) Model             { return press(m, tea.KeyTab) }
 func runeKey(m Model, r rune) Model {
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+	m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	return m
 }
 

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	sm "github.com/cinc-project/cinc-supermarket-api"
 )
 
@@ -293,7 +293,7 @@ func TestSearchKeyTypingFiresDebouncedSearch(t *testing.T) {
 	m.browse.searchInput.Focus()
 	m.browse.searchFocused = true
 
-	keyN := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")}
+	keyN := tea.KeyPressMsg{Code: 'n', Text: "n"}
 	next, cmd := handleSearchKey(m, keyN)
 	got := next.(model).browse
 	if got.query != "n" || got.mode != modeSearch {
@@ -321,7 +321,7 @@ func TestEscFromSearchModeKeepsQuery(t *testing.T) {
 	m.browse.searchFocused = true
 	m.browse.query = "nginx"
 
-	next, _ := handleSearchKey(m, tea.KeyMsg{Type: tea.KeyEsc})
+	next, _ := handleSearchKey(m, tea.KeyPressMsg{Code: tea.KeyEsc})
 	got := next.(model).browse
 	if got.searchFocused {
 		t.Error("esc should blur the search input")
@@ -450,7 +450,7 @@ func TestDetailEscReturnsToBrowse(t *testing.T) {
 	m.view = viewDetail
 	m.detail.ready = true
 
-	next, _ := updateDetail(m, tea.KeyMsg{Type: tea.KeyEsc})
+	next, _ := updateDetail(m, tea.KeyPressMsg{Code: tea.KeyEsc})
 	if next.(model).view != viewBrowse {
 		t.Errorf("view = %v, want viewBrowse", next.(model).view)
 	}

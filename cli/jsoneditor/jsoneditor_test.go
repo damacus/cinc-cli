@@ -5,12 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
-func ctrlD(m Model) Model { m, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlD}); return m }
-func enter(m Model) Model { m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter}); return m }
-func esc(m Model) Model   { m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc}); return m }
+func ctrlD(m Model) Model { m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Mod: tea.ModCtrl}); return m }
+func enter(m Model) Model { m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter}); return m }
+func esc(m Model) Model   { m, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEsc}); return m }
 
 func TestEditorCommitsCanonicalJSON(t *testing.T) {
 	m := New([]byte(`{"b":2,"a":1}`), func([]byte) error { return nil })

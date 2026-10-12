@@ -3,14 +3,14 @@ package explore
 import (
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
 )
 
 // handleKey routes a keypress to the active screen's handler. Each
 // handler owns its own quit semantics so text-entry screens (filter,
 // name, editor) can treat ordinary keys as input.
-func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.screen {
 	case screenEditor:
 		return m.updateEditorKey(msg)
@@ -37,7 +37,7 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // ----- profile picker --------------------------------------------------
 
-func (m model) updateProfilesKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateProfilesKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Quit):
 		return m, tea.Quit
@@ -59,7 +59,7 @@ func (m model) updateProfilesKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // ----- kind menu -------------------------------------------------------
 
-func (m model) updateKindsKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateKindsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Quit):
 		return m, tea.Quit
@@ -90,7 +90,7 @@ func (m model) updateKindsKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // ----- list ------------------------------------------------------------
 
-func (m model) updateListKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateListKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.filtering {
 		return m.updateFilterKey(msg)
 	}
@@ -148,8 +148,8 @@ func (m model) updateListKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) updateFilterKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
+func (m model) updateFilterKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	switch msg.Code {
 	case tea.KeyEnter:
 		m.filtering = false
 		m.filter.Blur()
@@ -233,7 +233,7 @@ func (m *model) detailCmd(v Viewable, name string) tea.Cmd {
 
 // ----- detail ----------------------------------------------------------
 
-func (m model) updateDetailKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateDetailKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Quit):
 		return m, tea.Quit
@@ -280,8 +280,11 @@ func (m model) clearSearch() (tea.Model, tea.Cmd) {
 
 // updateSearchKey drives the query modal: enter runs the search, tab opens
 // the index picker, esc cancels, everything else edits the query.
-func (m model) updateSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
+func (m model) updateSearchKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if msg.String() == "ctrl+c" {
+		return m, tea.Quit
+	}
+	switch msg.Code {
 	case tea.KeyEnter:
 		idx, ok := searchIndexOf(m.searchKind)
 		if !ok {
@@ -302,8 +305,6 @@ func (m model) updateSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.searchInput.Blur()
 		m.screen = m.returnTo
 		return m, nil
-	case tea.KeyCtrlC:
-		return m, tea.Quit
 	case tea.KeyTab:
 		m.searchKinds = searchableKinds()
 		m.searchKindCur = indexOfKind(m.searchKinds, m.searchKind)
@@ -317,7 +318,7 @@ func (m model) updateSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // updateSearchIndexKey drives the index picker: move and select an index,
 // or esc back to the query modal.
-func (m model) updateSearchIndexKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateSearchIndexKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Quit):
 		return m, tea.Quit
@@ -414,7 +415,7 @@ func (m model) startDownload(name string) (tea.Model, tea.Cmd) {
 
 // ----- modals: editor, confirm, name, result ---------------------------
 
-func (m model) updateEditorKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateEditorKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.editor, cmd = m.editor.Update(msg)
 	if !m.editor.Finished() {
@@ -443,7 +444,7 @@ func (m model) updateEditorKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) updateConfirmKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateConfirmKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "y", "Y":
 		run := m.pending
@@ -464,8 +465,11 @@ func (m model) updateConfirmKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) updateNameKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.Type {
+func (m model) updateNameKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if msg.String() == "ctrl+c" {
+		return m, tea.Quit
+	}
+	switch msg.Code {
 	case tea.KeyEnter:
 		action := m.nameAction
 		val := strings.TrimSpace(m.nameInput.Value())
@@ -479,16 +483,14 @@ func (m model) updateNameKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.nameInput.Blur()
 		m.screen = m.returnTo
 		return m, nil
-	case tea.KeyCtrlC:
-		return m, tea.Quit
 	}
 	var cmd tea.Cmd
 	m.nameInput, cmd = m.nameInput.Update(msg)
 	return m, cmd
 }
 
-func (m model) updateResultKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if msg.Type == tea.KeyCtrlC {
+func (m model) updateResultKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if msg.String() == "ctrl+c" {
 		return m, tea.Quit
 	}
 	m.screen = screenList

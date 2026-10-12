@@ -4,10 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
 	sm "github.com/cinc-project/cinc-supermarket-api"
+
+	"github.com/cinc-project/cinc-cli/cli/tui"
 )
 
 // viewID names the two screens the TUI flips between.
@@ -106,6 +108,7 @@ type detailState struct {
 // model end-to-end without launching a real bubbletea program.
 func initialModel(ctx context.Context, client apiClient, site string, openURL func(string) error, install func(context.Context, string, string) error) model {
 	ti := textinput.New()
+	ti.SetStyles(tui.DefaultTextInputStyles())
 	ti.Prompt = ""
 	ti.Placeholder = "type to search…"
 	ti.CharLimit = 100
@@ -256,11 +259,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		if !m.detail.ready {
-			m.detail.viewport = viewport.New(msg.Width, max(1, msg.Height-4))
+			m.detail.viewport = viewport.New(viewport.WithWidth(msg.Width), viewport.WithHeight(max(1, msg.Height-4)))
 			m.detail.ready = true
 		} else {
-			m.detail.viewport.Width = msg.Width
-			m.detail.viewport.Height = max(1, msg.Height-4)
+			m.detail.viewport.SetWidth(msg.Width)
+			m.detail.viewport.SetHeight(max(1, msg.Height-4))
 		}
 		return m, nil
 	case installDoneMsg:
@@ -278,7 +281,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
+	v := tea.NewView(m.renderView())
+	v.AltScreen = true
+	return v
+}
+
+func (m model) renderView() string {
 	switch m.view {
 	case viewDetail:
 		return viewDetailScreen(m)

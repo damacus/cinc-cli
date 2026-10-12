@@ -3,12 +3,13 @@ package jsoneditor
 import (
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textarea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/cinc-project/cinc-cli/cli/progname"
+	"github.com/cinc-project/cinc-cli/cli/tui"
 )
 
 // mode is the top-level editing surface: a structural tree walker or the
@@ -100,6 +101,7 @@ type Model struct {
 // editor opens in raw mode so the user can repair it.
 func New(initial []byte, validate func([]byte) error) Model {
 	ta := textarea.New()
+	ta.SetStyles(tui.DefaultTextAreaStyles())
 	ta.SetWidth(120)
 	ta.SetHeight(20)
 	ta.ShowLineNumbers = true
@@ -108,6 +110,7 @@ func New(initial []byte, validate func([]byte) error) Model {
 	ta.KeyMap.DeleteCharacterForward.SetEnabled(false)
 
 	ti := textinput.New()
+	ti.SetStyles(tui.DefaultTextInputStyles())
 	ti.Prompt = ""
 
 	m := Model{validate: validate, textarea: ta, input: ti}
@@ -138,7 +141,7 @@ func (m *Model) SetSize(width, height int) {
 		m.textarea.SetHeight(height - 5)
 	}
 	if width > 4 {
-		m.input.Width = width - 4
+		m.input.SetWidth(width - 4)
 	}
 }
 
@@ -149,12 +152,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	if sz, ok := msg.(tea.WindowSizeMsg); ok {
 		m.SetSize(sz.Width, sz.Height)
 	}
-	k, ok := msg.(tea.KeyMsg)
+	k, ok := msg.(tea.KeyPressMsg)
 	if !ok {
 		return m.forwardToActiveInput(msg)
 	}
 	// Ctrl-C always abandons the edit, from any state.
-	if k.Type == tea.KeyCtrlC {
+	if k.String() == "ctrl+c" {
 		m.aborted = true
 		m.finished = true
 		return m, nil
@@ -176,31 +179,32 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 // ----- structural navigation -------------------------------------------
 
-func (m Model) updateNavigating(k tea.KeyMsg) (Model, tea.Cmd) {
+func (m Model) updateNavigating(k tea.KeyPressMsg) (Model, tea.Cmd) {
+	if k.String() == "ctrl+d" {
+		return m.saveStructural(), nil
+	}
 	switch {
-	case k.Type == tea.KeyUp || isRune(k, 'k'):
+	case k.Code == tea.KeyUp || isRune(k, 'k'):
 		if m.cursor > 0 {
 			m.cursor--
 		}
-	case k.Type == tea.KeyDown || isRune(k, 'j'):
+	case k.Code == tea.KeyDown || isRune(k, 'j'):
 		if m.cursor < len(m.units)-1 {
 			m.cursor++
 		}
-	case k.Type == tea.KeyEnter:
+	case k.Code == tea.KeyEnter:
 		return m.beginEdit(), nil
 	case isRune(k, 'a'):
 		return m.addNode(), nil
 	case isRune(k, 'd'):
 		return m.deleteNode(), nil
-	case k.Type == tea.KeyTab:
+	case k.Code == tea.KeyTab:
 		m.mode = modeRaw
 		m.errMsg = ""
 		m.textarea.SetValue(string(m.root.bytes()))
 		m.textarea.Focus()
 		return m, textarea.Blink
-	case k.Type == tea.KeyCtrlD:
-		return m.saveStructural(), nil
-	case k.Type == tea.KeyEsc:
+	case k.Code == tea.KeyEsc:
 		m.aborted = true
 		m.finished = true
 	}
@@ -317,8 +321,8 @@ func (m Model) deleteNode() Model {
 
 // ----- inline (key / scalar) edit --------------------------------------
 
-func (m Model) updateInlineEdit(k tea.KeyMsg) (Model, tea.Cmd) {
-	switch k.Type {
+func (m Model) updateInlineEdit(k tea.KeyPressMsg) (Model, tea.Cmd) {
+	switch k.Code {
 	case tea.KeyEnter:
 		val := m.input.Value()
 		if m.editKey {
@@ -349,9 +353,8 @@ func (m Model) updateInlineEdit(k tea.KeyMsg) (Model, tea.Cmd) {
 
 // ----- whole-block edit ------------------------------------------------
 
-func (m Model) updateBlockEdit(k tea.KeyMsg) (Model, tea.Cmd) {
-	switch k.Type {
-	case tea.KeyCtrlD:
+func (m Model) updateBlockEdit(k tea.KeyPressMsg) (Model, tea.Cmd) {
+	if k.String() == "ctrl+d" {
 		parsed, err := parseTree([]byte(m.textarea.Value()))
 		if err != nil {
 			m.errMsg = err.Error()
@@ -362,6 +365,8 @@ func (m Model) updateBlockEdit(k tea.KeyMsg) (Model, tea.Cmd) {
 		m.state = stNavigating
 		m.rebuild()
 		return m, nil
+	}
+	switch k.Code {
 	case tea.KeyEsc:
 		m.errMsg = ""
 		m.state = stNavigating
@@ -374,8 +379,11 @@ func (m Model) updateBlockEdit(k tea.KeyMsg) (Model, tea.Cmd) {
 
 // ----- raw free-text mode ----------------------------------------------
 
-func (m Model) updateRaw(k tea.KeyMsg) (Model, tea.Cmd) {
-	switch k.Type {
+func (m Model) updateRaw(k tea.KeyPressMsg) (Model, tea.Cmd) {
+	if k.String() == "ctrl+d" {
+		return m.save([]byte(m.textarea.Value())), nil
+	}
+	switch k.Code {
 	case tea.KeyTab:
 		parsed, err := parseTree([]byte(m.textarea.Value()))
 		if err != nil {
@@ -390,8 +398,6 @@ func (m Model) updateRaw(k tea.KeyMsg) (Model, tea.Cmd) {
 		m.mode = modeStructural
 		m.errMsg = ""
 		return m, nil
-	case tea.KeyCtrlD:
-		return m.save([]byte(m.textarea.Value())), nil
 	case tea.KeyEsc:
 		m.aborted = true
 		m.finished = true
@@ -443,11 +449,13 @@ func (m Model) save(candidate []byte) Model {
 	return m
 }
 
-func (m Model) updatePreview(k tea.KeyMsg) Model {
-	switch k.Type {
-	case tea.KeyEnter, tea.KeyCtrlD:
+func (m Model) updatePreview(k tea.KeyPressMsg) Model {
+	if k.String() == "ctrl+d" || k.Code == tea.KeyEnter {
 		m.committed = m.pending
 		m.finished = true
+		return m
+	}
+	switch k.Code {
 	case tea.KeyEsc:
 		m.preview = ""
 		m.pending = nil
@@ -492,8 +500,8 @@ func (m Model) findUnit(path []int, typ unitType) int {
 
 func nullNode() *node { return &node{kind: kindNull, scalar: "null"} }
 
-func isRune(k tea.KeyMsg, r rune) bool {
-	return k.Type == tea.KeyRunes && len(k.Runes) == 1 && k.Runes[0] == r
+func isRune(k tea.KeyPressMsg, r rune) bool {
+	return k.Text == string(r)
 }
 
 // Finished reports whether the user has committed or aborted.

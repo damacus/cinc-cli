@@ -1,6 +1,6 @@
 package explore
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 // styles bundles every lipgloss style the explore TUI uses, in one
 // place so theming stays consistent. The palette matches the

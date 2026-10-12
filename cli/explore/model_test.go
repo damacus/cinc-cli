@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // nodesMux serves a node index and a single node document.
@@ -174,6 +174,6 @@ func indexOf(s, sub string) int {
 
 // keyRunes builds a KeyMsg that types s in one batch, which the
 // textinput model accepts as pasted-style input.
-func keyRunes(s string) tea.KeyMsg {
-	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s)}
+func keyRunes(s string) tea.KeyPressMsg {
+	return tea.KeyPressMsg{Text: s}
 }

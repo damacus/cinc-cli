@@ -1,11 +1,14 @@
 package explore
 
 import (
+	"os"
 	"strings"
 
+	"charm.land/lipgloss/v2/compat"
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/lexers"
 	chromastyles "github.com/alecthomas/chroma/v2/styles"
+	"github.com/charmbracelet/colorprofile"
 )
 
 // jsonHighlightStyle is the chroma style used for the JSON detail and summary
@@ -50,10 +53,12 @@ func colorizeJSON(src string) string {
 	return b.String()
 }
 
-// colorize reports whether the active terminal supports color, piggybacking on
-// lipgloss's own detection: a styled render only emits escape codes when the
-// renderer's color profile is non-Ascii. This keeps JSON highlighting in lock
-// step with the rest of the TUI's coloring (and off in non-TTY output).
-func colorize(s styles) bool {
-	return strings.Contains(s.Body.Render(" "), "\x1b")
+// colorize reports whether the active terminal supports color. Lip Gloss v2
+// keeps styles independent of the output profile, so use the profile it
+// detected at startup and preserve the existing NO_COLOR behaviour.
+func colorize(_ styles) bool {
+	if _, disabled := os.LookupEnv("NO_COLOR"); disabled {
+		return false
+	}
+	return compat.Profile >= colorprofile.ANSI
 }

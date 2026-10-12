@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/cinc-project/cinc-cli/cli/progname"
 )
@@ -72,7 +72,7 @@ func (m model) frame(title, body string, hints []string) string {
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("240")).
-		Width(innerW).
+		Width(m.width).
 		Height(innerH).
 		MaxWidth(m.width).
 		MaxHeight(m.height).

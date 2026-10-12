@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // Editing a node in the explorer opens the human-field form (the same one
@@ -31,7 +31,7 @@ func TestEditNodeOpensForm(t *testing.T) {
 	if _, ok := m.editor.(*nodeFormAdapter); !ok {
 		t.Fatalf("editing a node should open the node form, got %T", m.editor)
 	}
-	out := m.View()
+	out := m.View().Content
 	for _, want := range []string{"Node: web01", "Environment", "Run list", "Attributes"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("form view missing %q\n%s", want, out)
@@ -65,14 +65,14 @@ func TestCreateNodeUsesForm(t *testing.T) {
 	if _, ok := m.editor.(*nodeFormAdapter); !ok {
 		t.Fatalf("creating a node should open the node form, got %T", m.editor)
 	}
-	if !strings.Contains(m.View(), "New node") {
-		t.Errorf("create form should head with %q\n%s", "New node", m.View())
+	if !strings.Contains(m.View().Content, "New node") {
+		t.Errorf("create form should head with %q\n%s", "New node", m.View().Content)
 	}
 	for _, r := range "web02" {
 		m, _ = pressRune(t, m, r)
 	}
-	m, cmd = pressKey(t, m, tea.KeyCtrlD) // commit
-	m, _ = step(t, m, drain(cmd))         // mutationDoneMsg
+	m, cmd = pressCtrlD(t, m)     // commit
+	m, _ = step(t, m, drain(cmd)) // mutationDoneMsg
 	if !strings.Contains(posted, `"name":"web02"`) {
 		t.Errorf("POST body = %q, want it to carry name web02", posted)
 	}
@@ -100,7 +100,7 @@ func TestCreateNodeRequiresName(t *testing.T) {
 	m, _ = step(t, m, drain(cmd))
 
 	m, _ = m2(m.startCreate())
-	m, _ = pressKey(t, m, tea.KeyCtrlD) // commit with no name typed
+	m, _ = pressCtrlD(t, m) // commit with no name typed
 	if posted {
 		t.Error("an empty name must not POST a node")
 	}

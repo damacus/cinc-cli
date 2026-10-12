@@ -1,7 +1,7 @@
 package explore
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/cinc-project/cinc-cli/cli/jsoneditor"
 )

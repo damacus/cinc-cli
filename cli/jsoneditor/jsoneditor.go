@@ -17,10 +17,10 @@ import (
 	"bytes"
 	"fmt"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 // Run drives the editor as a standalone full-screen program and returns
@@ -29,7 +29,7 @@ func Run(initial []byte, validate func([]byte) error) ([]byte, error) {
 	if !HaveTerminal() {
 		return nil, ErrNoTerminal
 	}
-	final, err := tea.NewProgram(runner{m: New(initial, validate)}, tea.WithAltScreen()).Run()
+	final, err := tea.NewProgram(runner{m: New(initial, validate)}).Run()
 	if err != nil {
 		return nil, fmt.Errorf("cinc: edit failed: %w", err)
 	}
@@ -55,7 +55,11 @@ func (r runner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return r, cmd
 }
 
-func (r runner) View() string { return r.m.View() }
+func (r runner) View() tea.View {
+	v := tea.NewView(r.m.View())
+	v.AltScreen = true
+	return v
+}
 
 // highlightJSON wraps b in chroma's terminal256 JSON highlighting. If any
 // step fails the raw bytes are returned so the preview is still readable.

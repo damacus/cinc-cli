@@ -8,12 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
 	cinc "github.com/cinc-project/cinc-api"
 
 	"github.com/cinc-project/cinc-cli/cli/config"
+	"github.com/cinc-project/cinc-cli/cli/tui"
 )
 
 // summaryDebounce is how long the cursor must settle on a row before the
@@ -160,13 +161,16 @@ type startup struct {
 
 func newModel(ctx context.Context, opts Options, s startup) model {
 	filter := textinput.New()
+	filter.SetStyles(tui.DefaultTextInputStyles())
 	filter.Prompt = "/"
 	filter.Placeholder = "filter…"
 
 	name := textinput.New()
+	name.SetStyles(tui.DefaultTextInputStyles())
 	name.Prompt = "› "
 
 	search := textinput.New()
+	search.SetStyles(tui.DefaultTextInputStyles())
 	search.Prompt = "› "
 	search.Placeholder = "name:web* AND chef_environment:prod…"
 
@@ -440,7 +444,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleSummaryLoaded(msg), nil
 	case searchLoadedMsg:
 		return m.handleSearchLoaded(msg)
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.handleKey(msg)
 	}
 	// Forward other messages (cursor blink, etc.) to whichever modal owns
@@ -448,7 +452,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m.forwardToActive(msg)
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
+	v := tea.NewView(m.view())
+	v.AltScreen = true
+	return v
+}
+
+func (m model) view() string {
 	switch m.screen {
 	case screenProfiles:
 		return m.viewProfiles()
@@ -482,11 +492,11 @@ func (m model) handleResize(msg tea.WindowSizeMsg) model {
 	vpW := max(1, msg.Width-2)
 	vpH := m.bodyHeight()
 	if !m.detailReady {
-		m.detail = viewport.New(vpW, vpH)
+		m.detail = viewport.New(viewport.WithWidth(vpW), viewport.WithHeight(vpH))
 		m.detailReady = true
 	} else {
-		m.detail.Width = vpW
-		m.detail.Height = vpH
+		m.detail.SetWidth(vpW)
+		m.detail.SetHeight(vpH)
 	}
 	// The editor is only constructed when opened; resize it only while
 	// it's the active screen to avoid touching a zero-value textarea.

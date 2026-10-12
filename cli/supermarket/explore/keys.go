@@ -1,6 +1,6 @@
 package explore
 
-import "github.com/charmbracelet/bubbles/key"
+import "charm.land/bubbles/v2/key"
 
 // keyMap collects every binding the explore TUI handles, in one place
 // so the help footer and the actual Update handlers can't drift.

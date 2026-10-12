@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // nodesServer returns an httptest server with a two-node index and a
@@ -54,7 +54,7 @@ func TestSummaryPanelLoadsForSelectedNode(t *testing.T) {
 	if !ok || len(view.Fields) == 0 {
 		t.Fatalf("web01 summary not cached as fields: %+v", m.summaryCache)
 	}
-	out := m.View()
+	out := m.View().Content
 	for _, want := range []string{"web01 - ubuntu 24.04", "Environment", "production", "Policy Group", "web", "18.4.2"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("rendered view missing %q\n%s", want, out)
@@ -87,7 +87,7 @@ func TestSummaryNotRefetchedWhenCached(t *testing.T) {
 func TestListViewIsSplitAndFooterPinned(t *testing.T) {
 	m, _ := openNodes(t, nodesServer(t))
 	// Sized wide by modelOnKinds (100x40), so the split is active.
-	out := m.View()
+	out := m.View().Content
 	if h := lipgloss.Height(out); h != 40 {
 		t.Errorf("height = %d, want 40", h)
 	}
@@ -110,7 +110,7 @@ func TestNarrowTerminalFallsBackToList(t *testing.T) {
 	m, _ := openNodes(t, nodesServer(t))
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 60, Height: 24})
 	m = next.(model)
-	out := m.View()
+	out := m.View().Content
 	// Below splitMinWidth there's no separator column running the body.
 	body := strings.Split(out, "\n")
 	rules := 0

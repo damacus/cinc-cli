@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	sm "github.com/cinc-project/cinc-supermarket-api"
 	"github.com/mattn/go-isatty"
 
@@ -59,7 +59,6 @@ func Run(ctx context.Context, opts Options) error {
 		tea.WithContext(ctx),
 		tea.WithInput(opts.Stdin),
 		tea.WithOutput(opts.Stdout),
-		tea.WithAltScreen(),
 	)
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("supermarket explore: %w", err)

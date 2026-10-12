@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // commitEditor drives the embedded JSON editor to commit its current
@@ -15,7 +15,7 @@ import (
 // on Ctrl-D (no preview/confirm round-trip).
 func commitEditor(t *testing.T, m model) (model, tea.Cmd) {
 	t.Helper()
-	return pressKey(t, m, tea.KeyCtrlD)
+	return pressCtrlD(t, m)
 }
 
 func TestEditFlowSavesEditedObject(t *testing.T) {

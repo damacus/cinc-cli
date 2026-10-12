@@ -3,7 +3,7 @@ package explore
 import (
 	"encoding/json"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	cinc "github.com/cinc-project/cinc-api"
 
 	"github.com/cinc-project/cinc-cli/cli/nodeedit"

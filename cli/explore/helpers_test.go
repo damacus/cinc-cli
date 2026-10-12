@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	cinc "github.com/cinc-project/cinc-api"
 )
 
@@ -68,12 +68,16 @@ func drain(cmd tea.Cmd) tea.Msg {
 
 // pressRune feeds a single-rune keypress.
 func pressRune(t *testing.T, m model, r rune) (model, tea.Cmd) {
-	return step(t, m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+	return step(t, m, tea.KeyPressMsg{Code: r, Text: string(r)})
 }
 
 // pressKey feeds a special key.
-func pressKey(t *testing.T, m model, k tea.KeyType) (model, tea.Cmd) {
-	return step(t, m, tea.KeyMsg{Type: k})
+func pressKey(t *testing.T, m model, k rune) (model, tea.Cmd) {
+	return step(t, m, tea.KeyPressMsg{Code: k})
+}
+
+func pressCtrlD(t *testing.T, m model) (model, tea.Cmd) {
+	return step(t, m, tea.KeyPressMsg{Code: 'd', Mod: tea.ModCtrl})
 }
 
 // jsonHandler registers a JSON GET response at path.

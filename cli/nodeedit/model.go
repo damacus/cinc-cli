@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textarea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	cinc "github.com/cinc-project/cinc-api"
 
 	"github.com/cinc-project/cinc-cli/cli/jsoneditor"
+	"github.com/cinc-project/cinc-cli/cli/tui"
 )
 
 // focus identifies which part of the form has the keyboard.
@@ -80,18 +81,22 @@ func New(node *cinc.Node) (Model, error) {
 	}
 
 	env := textinput.New()
+	env.SetStyles(tui.DefaultTextInputStyles())
 	env.Prompt = ""
 	env.SetValue(node.Environment)
 	env.Placeholder = "_default"
 
 	pg := textinput.New()
+	pg.SetStyles(tui.DefaultTextInputStyles())
 	pg.Prompt = ""
 	pg.SetValue(node.PolicyGroup)
 	pn := textinput.New()
+	pn.SetStyles(tui.DefaultTextInputStyles())
 	pn.Prompt = ""
 	pn.SetValue(node.PolicyName)
 
 	rl := textarea.New()
+	rl.SetStyles(tui.DefaultTextAreaStyles())
 	rl.ShowLineNumbers = false
 	rl.Prompt = ""
 	rl.SetValue(runListText(node))
@@ -119,19 +124,24 @@ func NewCreate() (Model, error) {
 	}
 
 	name := textinput.New()
+	name.SetStyles(tui.DefaultTextInputStyles())
 	name.Prompt = ""
 	name.Placeholder = "new-node"
 
 	env := textinput.New()
+	env.SetStyles(tui.DefaultTextInputStyles())
 	env.Prompt = ""
 	env.Placeholder = "_default"
 
 	pg := textinput.New()
+	pg.SetStyles(tui.DefaultTextInputStyles())
 	pg.Prompt = ""
 	pn := textinput.New()
+	pn.SetStyles(tui.DefaultTextInputStyles())
 	pn.Prompt = ""
 
 	rl := textarea.New()
+	rl.SetStyles(tui.DefaultTextAreaStyles())
 	rl.ShowLineNumbers = false
 	rl.Prompt = ""
 
@@ -157,16 +167,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	if sz, ok := msg.(tea.WindowSizeMsg); ok {
 		m.setSize(sz.Width, sz.Height)
 	}
-	k, ok := msg.(tea.KeyMsg)
+	k, ok := msg.(tea.KeyPressMsg)
 	if !ok {
 		return m.forward(msg)
 	}
-	switch k.Type {
-	case tea.KeyCtrlC:
+	switch k.String() {
+	case "ctrl+c":
 		m.aborted = true
 		m.finished = true
 		return m, nil
-	case tea.KeyCtrlD:
+	case "ctrl+d":
 		return m.save(), nil
 	}
 	if m.dived {
@@ -179,8 +189,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 // fields, Enter dives into the run-list or attributes editor, Esc cancels
 // the whole edit. Text fields are edited inline while focused; the run-list
 // and attributes sections ignore typing until dived into.
-func (m Model) updateNavigating(k tea.KeyMsg) (Model, tea.Cmd) {
-	switch k.Type {
+func (m Model) updateNavigating(k tea.KeyPressMsg) (Model, tea.Cmd) {
+	switch k.Code {
 	case tea.KeyUp:
 		m.setFocus(m.focus - 1)
 		return m, nil
@@ -206,8 +216,8 @@ func (m Model) updateNavigating(k tea.KeyMsg) (Model, tea.Cmd) {
 // updateDived forwards keys to the dived-into section. Esc cancels an open
 // attribute sub-edit if there is one, otherwise it backs out to the field
 // cursor.
-func (m Model) updateDived(k tea.KeyMsg) (Model, tea.Cmd) {
-	if k.Type == tea.KeyEsc {
+func (m Model) updateDived(k tea.KeyPressMsg) (Model, tea.Cmd) {
+	if k.Code == tea.KeyEsc {
 		if m.focus == focusAttrs && m.attrs.Editing() {
 			return m.forward(k)
 		}
@@ -216,7 +226,7 @@ func (m Model) updateDived(k tea.KeyMsg) (Model, tea.Cmd) {
 	}
 	// In the run list, Enter starts a new indented, bulleted line rather than
 	// a bare newline, so every entry stays prefixed alike.
-	if m.focus == focusRunList && k.Type == tea.KeyEnter {
+	if m.focus == focusRunList && k.Code == tea.KeyEnter {
 		m.runList.InsertString("\n" + runListBullet)
 		return m, nil
 	}
@@ -329,10 +339,10 @@ func (m *Model) exitDive() {
 func (m *Model) setSize(w, h int) {
 	m.width, m.height = w, h
 	fieldWidth := max(w-16, 10)
-	m.nameInput.Width = fieldWidth
-	m.env.Width = fieldWidth
-	m.policyGroup.Width = fieldWidth
-	m.policyName.Width = fieldWidth
+	m.nameInput.SetWidth(fieldWidth)
+	m.env.SetWidth(fieldWidth)
+	m.policyGroup.SetWidth(fieldWidth)
+	m.policyName.SetWidth(fieldWidth)
 	m.runList.SetWidth(w)
 	m.runList.SetHeight(4)
 	// The attributes editor takes whatever vertical space the fixed chrome

@@ -4,23 +4,29 @@ import (
 	"encoding/json"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	cinc "github.com/cinc-project/cinc-api"
 
 	"github.com/cinc-project/cinc-cli/cli/jsoneditor"
 )
 
-func keyType(m Model, t tea.KeyType) Model { m, _ = m.Update(tea.KeyMsg{Type: t}); return m }
-func ctrlD(m Model) Model                  { return keyType(m, tea.KeyCtrlD) }
-func ctrlC(m Model) Model                  { return keyType(m, tea.KeyCtrlC) }
-func down(m Model) Model                   { return keyType(m, tea.KeyDown) }
-func up(m Model) Model                     { return keyType(m, tea.KeyUp) }
-func enter(m Model) Model                  { return keyType(m, tea.KeyEnter) }
-func esc(m Model) Model                    { return keyType(m, tea.KeyEsc) }
+func keyType(m Model, key rune) Model { m, _ = m.Update(tea.KeyPressMsg{Code: key}); return m }
+func ctrlD(m Model) Model {
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'd', Mod: tea.ModCtrl})
+	return m
+}
+func ctrlC(m Model) Model {
+	m, _ = m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
+	return m
+}
+func down(m Model) Model  { return keyType(m, tea.KeyDown) }
+func up(m Model) Model    { return keyType(m, tea.KeyUp) }
+func enter(m Model) Model { return keyType(m, tea.KeyEnter) }
+func esc(m Model) Model   { return keyType(m, tea.KeyEsc) }
 
 func typeRunes(m Model, s string) Model {
 	for _, r := range s {
-		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		m, _ = m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
 	}
 	return m
 }

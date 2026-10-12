@@ -3,7 +3,7 @@ package nodeedit
 import (
 	"fmt"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	cinc "github.com/cinc-project/cinc-api"
 
 	"github.com/cinc-project/cinc-cli/cli/jsoneditor"
@@ -20,7 +20,7 @@ func Run(node *cinc.Node) (*cinc.Node, bool, error) {
 	if err != nil {
 		return nil, false, err
 	}
-	final, err := tea.NewProgram(runner{m: m}, tea.WithAltScreen()).Run()
+	final, err := tea.NewProgram(runner{m: m}).Run()
 	if err != nil {
 		return nil, false, fmt.Errorf("cinc: node edit failed: %w", err)
 	}
@@ -46,4 +46,8 @@ func (r runner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return r, cmd
 }
 
-func (r runner) View() string { return r.m.View() }
+func (r runner) View() tea.View {
+	v := tea.NewView(r.m.View())
+	v.AltScreen = true
+	return v
+}

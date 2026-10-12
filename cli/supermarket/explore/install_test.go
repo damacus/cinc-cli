@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	sm "github.com/cinc-project/cinc-supermarket-api"
 )
 
-func keyRunes(s string) tea.KeyMsg {
-	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s)}
+func keyRunes(s string) tea.KeyPressMsg {
+	return tea.KeyPressMsg{Text: s}
 }
 
 func TestInstallKeyStartsConfirmation(t *testing.T) {

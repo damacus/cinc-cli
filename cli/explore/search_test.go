@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // searchMux serves the node/role indexes plus their /search endpoints so a
@@ -226,7 +226,7 @@ func TestSearchModalLabelsTypeWithPluralTitle(t *testing.T) {
 	m := modelOnKinds(t, testClient(t, searchMux(t)))
 	m, _ = pressRune(t, m, 's') // search the highlighted Nodes kind
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "Search Nodes") {
 		t.Errorf("search modal header missing plural type; view = %q", view)
 	}
